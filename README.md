@@ -57,4 +57,4 @@ Note: for files under 200kb, they can be sent directly through the API. For file
 
 ### Hint
 Don't forget that for any Data Model you want to craft, you can use **Destinations > your destination > DevTools** in [your Redox dashboard](https://dashboard.redoxengine.com/), then select the Data Model type and event you want.  
-Redox will automatically create the Data Model examples!
+Redox will automatically create the Data Model example!
