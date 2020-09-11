@@ -1,7 +1,7 @@
 # Introduction
 
-Some quick and dirty code in a couple of days to experiment with Redox Data Model API for connection to EMRs (fetch patient demographics from medical record number, and sending a PDF report to patient's file in the EHR).
-It is based on a very nice example from Tom Jessessky's 15 min video demoing the Redox API and Dev Tools: [the demo video](https://www.youtube.com/watch?v=4_CURkT_fCo) 
+Some quick and dirty code in a couple of days to experiment with Redox Data Model API for connection to EMRs (fetch patient demographics from medical record number, and sending a PDF report to patient's file in the EHR).  
+It is based on a very nice example from Tom Jessessky's 15 min video demoing the Redox API and Dev Tools: [watch the video](https://www.youtube.com/watch?v=4_CURkT_fCo) 
 
 ## Installation
 You will need a node.js server to run the code. 
