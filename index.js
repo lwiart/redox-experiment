@@ -1,3 +1,13 @@
+/*
+Summary: in the following, there are examples of querying Redox sandbox to:
+- Fetch patient demographic info from MRN (Medical Record Number)
+- Push a PDF file to EHR
+
+Some experiments were started but not finished:
+- SSO: "EHR launch",ie. HCP is in EHR and wants to connect to an external app without having to reauthenticate into the app
+- R^FHIR: Redox advertised that they have FHIR compliant APIs (for using instead of their Data Models approach). But this part seems to be too preliminary and not enough documented to be used
+*/
+
 const util = require("util");
 var express = require('express');
 var app = express();
@@ -9,10 +19,6 @@ var SOURCE_API_KEY = 'e479fbe0-1c9b-42ce-acf7-6e586127e7c4';
 var SOURCE_SECRET = 'KQ1x2yJxv7Nnu6AtwAUPzvBBbewZVpkBdznPYmjeWucKAWar7xOqGMBL1ep0WgHYbnP54j0U';
 var authToken, authTokenExpires;
 
-var SOURCE_API_KEY_FHIR = 'f9fe9736-d252-4c68-bfc9-921a3dcd4883';
-var SOURCE_SECRET_FHIR = 'axoJzfQSCFYVtZ7kZAjblrLYYGXOftQC1NNiD7Tiv5VEjdglrSCwiQzkBDGOMrRQ1ecQ95Ov';
-
-var SSO_SECRET = 'BuzYgxIHMTIeeCpdbA7Z04d9M1BC59ciWlrqI3IqeBaGNTiycqlzzPosAlMTN8cdJ4RnzVw7';
 
 var lowdb = require('lowdb');
 var db = lowdb('db.json');
@@ -27,9 +33,10 @@ app.listen(80, function () {
 });
 
 app.get('/', function (req, res) {
-	res.send('Hello, World at '+Date.now());
+	res.send('Hello, World at timestamp='+Date.now());
 });
 
+//The following allows to verify the GET connection when destination is being created in Redox dashboard
 app.get('/destination', function (req, res) {
 	//Used to validate destination in Redox: must return the challenge value sent by Redox in the GET
 	if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
@@ -37,7 +44,7 @@ app.get('/destination', function (req, res) {
 		return res.send(req.query.challenge);
 	}
 
-	console.log('verfication-token did not match :( ');
+	console.log('verification-token did not match :( ');
 	res.sendStatus(400);
 });
 
@@ -62,20 +69,8 @@ app.get('/patientsearch', function (req, res) {
 	res.sendStatus(200)
 });
 
-app.get('/patientsearchfhir', function (req, res) {
-	//Used to validate destination in Redox: must return the challenge value sent by Redox in the GET
-	if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
-		console.log('verification-token matched!');
-		return res.send(req.query.challenge);
-	}
-
-	var patientId = req.query.id
-	var IDType = 'MR';
-	var patientDemographics = getPatientFhir(patientId, IDType)
-	res.sendStatus(200)
-});
-
-
+//The following allows to verify the POST connection when destination is being created in Redox dashboard
+//It also allows to get Appointment information for a patient and store it into the local json DB (example from Tom): watch the video, and see how to use the DevTools to send Appointment info
 app.post('/destination', function (req, res) {
 	console.log('request body: ' + util.inspect(req.body));
 
@@ -108,12 +103,15 @@ app.post('/destination', function (req, res) {
 	res.sendStatus(200);
 });
 
+//Counterpart of the preceding: get the list of appointments that have been stored in the local JSON DB.
 app.get('/appointments', function (req, res) {
 	var appointments = db.get('appointments').value();
 	res.send(appointments);
 });
 
-//For SSO
+//Some SSO experiment, work in progress.
+//The endpoint must be able to receive and process JSON Web Token (see Redox Destination > Dev Tools > Data Model SSO).
+
 app.get('/sso', function (req, res) {
 	console.log('SSO request coming in:');
 	console.log('----------------------');
@@ -468,35 +466,6 @@ function getAuthToken(callback) {
 	}
 }
 
-function getAuthTokenFhir(callback) {
-	if (authToken && Date.now() < new Date(authTokenExpires).getTime()) {
-		return callback(authToken);
-	} else {
-		//get new token
-
-		var options = {
-			url: 'https://api.redoxengine.com/auth/authenticate',
-			method: 'POST',
-			body: {
-				apiKey: SOURCE_API_KEY_FHIR,
-				secret: SOURCE_SECRET_FHIR
-			},
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			json: true
-		};
-
-		request.post(options, function (err, response, body) {
-			//console.log('Step 1, getting AccessToken:'+ body);
-
-			authToken = body.accessToken;
-			authTokenExpires = body.expires;
-
-			callback(authToken);
-		});
-	}
-}
 
 function getClinicalSummary(appointment) {
 	getAuthToken(function (token) {
@@ -592,4 +561,53 @@ function sendMedia(appointment) {
 			console.log(body);
 		});
 	})
+
+	//////////////////////////////////////FHIR experiment///////////////////////////////////////////////////////////////////
+	//Some experiment started with R^FHIR API, but documentation seems scarce in Redox doc
+	//And Redox team didn't advise to use R^FHIR and use their Data Models instead...
+	var SOURCE_API_KEY_FHIR = 'f9fe9736-d252-4c68-bfc9-921a3dcd4883';
+	var SOURCE_SECRET_FHIR = 'axoJzfQSCFYVtZ7kZAjblrLYYGXOftQC1NNiD7Tiv5VEjdglrSCwiQzkBDGOMrRQ1ecQ95Ov';
+	app.get('/patientsearchfhir', function (req, res) {
+		//Used to validate destination in Redox: must return the challenge value sent by Redox in the GET
+		if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
+			console.log('verification-token matched!');
+			return res.send(req.query.challenge);
+		}
+
+		var patientId = req.query.id
+		var IDType = 'MR';
+		var patientDemographics = getPatientFhir(patientId, IDType)
+		res.sendStatus(200)
+	});
+	function getAuthTokenFhir(callback) {
+		if (authToken && Date.now() < new Date(authTokenExpires).getTime()) {
+			return callback(authToken);
+		} else {
+			//get new token
+
+			var options = {
+				url: 'https://api.redoxengine.com/auth/authenticate',
+				method: 'POST',
+				body: {
+					apiKey: SOURCE_API_KEY_FHIR,
+					secret: SOURCE_SECRET_FHIR
+				},
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				json: true
+			};
+
+			request.post(options, function (err, response, body) {
+				//console.log('Step 1, getting AccessToken:'+ body);
+
+				authToken = body.accessToken;
+				authTokenExpires = body.expires;
+
+				callback(authToken);
+			});
+		}
+	}
+	//////////////////////////////////////End of FHIR experiment///////////////////////////////////////////////////////////////////
+
 }
