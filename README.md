@@ -34,8 +34,18 @@ You must create in Redox dashboard Sources (EHR endpoints that will receive you 
 - With that destination, you can receive any kind of patient data that Redox offers in its DevTools (in the code, there are examples to receive appointments and store them in a local JSON DB)
 
 - Create a Source for the "get patient demographics from her Medical Record Number" and "send PDF report" use cases
-  - 
+  - Communication method = Redox API / Data format = JSON
+  - Take note of the API key
+  - Generate a Source Secret and take note of it
 
+
+- Put in the index.js code the previously noted SOURCE_API_KEY and SOURCE_SECRET
+
+- Now, you can search patient by Medical Record Number, by using the following URL: http://&lt;your IP address or domain name&gt;/patientsearch?id=&lt;the patient MRN&gt;.  Here are some Redox patient MRN examples:
+  - Timothy Bixby: 0000000001
+  - Barbara Bixby: 0000000002
+  - Walter Carthwright: 0000000003
+- You should get the full JSON response containing the patient demographic profile (name, address, DoB, etc)
 
 
 

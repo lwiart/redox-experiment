@@ -48,25 +48,71 @@ app.get('/destination', function (req, res) {
 	res.sendStatus(400);
 });
 
-//GET: search patient.
+//GET: search patient by MRN
 //Example: 
 //1- from cmd line: start Node JS: node index.js
-//2- then call the API: http://wiart.freeboxos.fr/patientsearch?id=0000000003
+//2- then call the API: http://<your IP address or domain name>/patientsearch?id=0000000003
 //   Example patients:
 //    Timothy Bixby: 0000000001
 //    Barbara Bixby: 0000000002
 //    Walter Carthwright: 0000000003
 app.get('/patientsearch', function (req, res) {
 	//Used to validate destination in Redox: must return the challenge value sent by Redox in the GET
-	if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
-		console.log('verification-token matched!');
-		return res.send(req.query.challenge);
-	}
+	// if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
+	// 	console.log('verification-token matched!');
+	// 	return res.send(req.query.challenge);
+	// }
 
-	var patientId = req.query.id
-	var IDType = 'MR';
-	var patientDemographics = getPatient(patientId, IDType)
-	res.sendStatus(200)
+	//Call getPatientDemographics with patient ID (req.query.id) being searched and type of ID = 'MR' (medical record number)
+	var body;
+	getAuthToken(function (token) {
+		var options = {
+			url: 'https://api.redoxengine.com/query',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + token
+			},
+			json: true
+		};
+
+		options.body = {
+			"Meta": {
+				"DataModel": "PatientSearch",
+				"EventType": "Query",
+				"EventDateTime": "2017-07-26T04:46:01.868Z",
+				"Test": true,
+				"Destinations": [
+					{
+						"ID": "0f4bd1d1-451d-4351-8cfd-b767d1b488d6",
+						"Name": "Patient Search Endpoint"
+					}
+				]
+			},
+			"Patient": {
+				"Identifiers": [
+					{
+						"ID": req.query.id,
+						"IDType": "MR"
+					}
+				]
+
+			}
+		};
+
+		request.post(options, function (err, response, body) {
+			console.log('QUERY:');
+			console.log('------');
+			console.log(util.inspect(options.body));
+			console.log('RESPONSE:');
+			console.log('---------');
+			console.log('Errors: ' + err);
+			console.log('Status code: ' + response.statusCode);
+			console.log('errors in body: ' + util.inspect(body.Meta.Errors));
+			//console.log(body.Patient.Demographics);
+			res.send("<h2>Demographic info for patient with MRN="+req.query.id+"</h2><code>"+JSON.stringify(body.Patient.Demographics)+"</code>");
+		})
+	});
 });
 
 //The following allows to verify the POST connection when destination is being created in Redox dashboard
@@ -109,127 +155,10 @@ app.get('/appointments', function (req, res) {
 	res.send(appointments);
 });
 
-//Some SSO experiment, work in progress.
-//The endpoint must be able to receive and process JSON Web Token (see Redox Destination > Dev Tools > Data Model SSO).
+//Craft the Redox Data Model to query patient by MRN
+//And call Redox API
+function getPatientDemographics(id, idtype) {
 
-app.get('/sso', function (req, res) {
-	console.log('SSO request coming in:');
-	console.log('----------------------');
-	console.log(util.inspect(req.body));
-
-	//must return a 301 once adhoc checks done
-	res.sendStatus(200)
-});
-
-//if SSO error
-app.get('/ssoerror', function (req, res) {
-	console.log('SSO Error!');
-	console.log('----------');
-	console.log(util.inspect(req.body));
-
-	res.sendStatus(401)
-});
-
-function getPatient(id, idtype) {
-	console.log('Searching patient ' + idtype + '=' + util.inspect(id));
-	getAuthToken(function (token) {
-		var options = {
-			url: 'https://api.redoxengine.com/query',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + token
-			},
-			json: true
-		};
-
-		options.body = {
-			"Meta": {
-				"DataModel": "PatientSearch",
-				"EventType": "Query",
-				"EventDateTime": "2017-07-26T04:46:01.868Z",
-				"Test": true,
-				"Destinations": [
-					{
-						"ID": "0f4bd1d1-451d-4351-8cfd-b767d1b488d6",
-						"Name": "Patient Search Endpoint"
-					}
-				]
-			},
-			"Patient": {
-				"Identifiers": [
-					{
-						"ID": id,
-						"IDType": idtype
-					}
-				]
-
-			}
-		};
-
-		request.post(options, function (err, response, body) {
-			console.log('QUERY:');
-			console.log('------');
-			console.log(util.inspect(options.body));
-			console.log('RESPONSE:');
-			console.log('---------');
-			console.log('Patient info:');
-			console.log('Errors: ' + err);
-			console.log('Status code: ' + response.statusCode);
-			console.log('errors in body: ' + util.inspect(body.Meta.Errors));
-			console.log(body.Patient.Demographics);
-			return body.Patient.Demographics;
-		})
-	});
-}
-
-function getPatientFhir(id, idtype) {
-	console.log('Searching patient ' + idtype + '=' + util.inspect(id));
-	getAuthToken(function (token) {
-		var options = {
-			url: 'https://api.redoxengine.com/fhir/$process-message',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + token
-			},
-			json: true
-		};
-
-		options.body = {
-			"Meta": {
-				"DataModel": "PatientSearch",
-				"EventType": "Query",
-				"EventDateTime": "2017-07-26T04:46:01.868Z",
-				"Test": true,
-				"Destinations": [
-					{
-						"ID": "0f4bd1d1-451d-4351-8cfd-b767d1b488d6",
-						"Name": "Patient Search Endpoint"
-					}
-				]
-			},
-			"Patient": {
-				"Identifiers": [
-					{
-						"ID": id,
-						"IDType": idtype
-					}
-				]
-
-			}
-		};
-
-		request.post(options, function (err, response, body) {
-			console.log('RESPONSE:');
-			console.log('Patient info:');
-			console.log('Errors: ' + err);
-			console.log('Status code: ' + response.statusCode);
-			console.log('errors in body: ' + util.inspect(body.Meta.Errors));
-			console.log(body.Patient.Demographics);
-			return body.Patient.Demographics;
-		})
-	});
 }
 
 function sendPdf() {
@@ -562,6 +491,29 @@ function sendMedia(appointment) {
 		});
 	})
 
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Some SSO experiment, work in progress.
+	//The endpoint must be able to receive and process JSON Web Token (see Redox Destination > Dev Tools > Data Model SSO).
+
+	app.get('/sso', function (req, res) {
+		console.log('SSO request coming in:');
+		console.log('----------------------');
+		console.log(util.inspect(req.body));
+
+		//must return a 301 once adhoc checks done
+		res.sendStatus(200)
+	});
+
+	//if SSO error
+	app.get('/ssoerror', function (req, res) {
+		console.log('SSO Error!');
+		console.log('----------');
+		console.log(util.inspect(req.body));
+
+		res.sendStatus(401)
+	});
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	//////////////////////////////////////FHIR experiment///////////////////////////////////////////////////////////////////
 	//Some experiment started with R^FHIR API, but documentation seems scarce in Redox doc
 	//And Redox team didn't advise to use R^FHIR and use their Data Models instead...
@@ -607,6 +559,54 @@ function sendMedia(appointment) {
 				callback(authToken);
 			});
 		}
+	}
+	function getPatientFhir(id, idtype) {
+		console.log('Searching patient ' + idtype + '=' + util.inspect(id));
+		getAuthToken(function (token) {
+			var options = {
+				url: 'https://api.redoxengine.com/fhir/$process-message',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': 'Bearer ' + token
+				},
+				json: true
+			};
+
+			options.body = {
+				"Meta": {
+					"DataModel": "PatientSearch",
+					"EventType": "Query",
+					"EventDateTime": "2017-07-26T04:46:01.868Z",
+					"Test": true,
+					"Destinations": [
+						{
+							"ID": "0f4bd1d1-451d-4351-8cfd-b767d1b488d6",
+							"Name": "Patient Search Endpoint"
+						}
+					]
+				},
+				"Patient": {
+					"Identifiers": [
+						{
+							"ID": id,
+							"IDType": idtype
+						}
+					]
+
+				}
+			};
+
+			request.post(options, function (err, response, body) {
+				console.log('RESPONSE:');
+				console.log('Patient info:');
+				console.log('Errors: ' + err);
+				console.log('Status code: ' + response.statusCode);
+				console.log('errors in body: ' + util.inspect(body.Meta.Errors));
+				console.log(body.Patient.Demographics);
+				return body.Patient.Demographics;
+			})
+		});
 	}
 	//////////////////////////////////////End of FHIR experiment///////////////////////////////////////////////////////////////////
 
