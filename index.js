@@ -57,14 +57,7 @@ app.get('/destination', function (req, res) {
 //    Barbara Bixby: 0000000002
 //    Walter Carthwright: 0000000003
 app.get('/patientsearch', function (req, res) {
-	//Used to validate destination in Redox: must return the challenge value sent by Redox in the GET
-	// if (req.headers['verification-token'] === DESTINATION_VERIFICATION_TOKEN) {
-	// 	console.log('verification-token matched!');
-	// 	return res.send(req.query.challenge);
-	// }
-
-	//Call getPatientDemographics with patient ID (req.query.id) being searched and type of ID = 'MR' (medical record number)
-	var body;
+	//Craft the Data Model for PatientSearch with the patient ID (req.query.id) being searched and type of ID = 'MR' (medical record number)
 	getAuthToken(function (token) {
 		var options = {
 			url: 'https://api.redoxengine.com/query',
@@ -115,8 +108,93 @@ app.get('/patientsearch', function (req, res) {
 	});
 });
 
+//Create endpoint for sending PDF file: a dummy PDF for patient Timothy Bixby: 0000000001, HCP being Pat Granite.
+//PDF file content goes into FileContents, base64 encoded
+app.get('/sendpdf', function (req, res) {
+	//Create a Media Data Model for sending a PDF file
+	getAuthToken(function (token) {
+		var options = {
+			url: 'https://api.redoxengine.com/endpoint',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + token
+			},
+			json: true
+		};
+
+		options.body = {
+			"Meta": {
+				"DataModel": "Media",
+				"EventType": "New",
+				"EventDateTime": "2020-09-11T02:47:33.101Z",
+				"Test": true,
+				"Source": {
+					"ID": "7ce6f387-c33c-417d-8682-81e83628cbd9",
+					"Name": "Redox Dev Tools"
+				},
+				"Destinations": [
+					{
+						"ID": "af394f14-b34a-464f-8d24-895f370af4c9",
+						"Name": "Redox EMR"
+					}
+				],
+				"Message": {
+					"ID": 5565
+				},
+				"Transmission": {
+					"ID": 12414
+				},
+				"FacilityCode": null
+			},
+			"Patient": {
+				"Identifiers": [
+					{
+						"ID": "0000000001",
+						"IDType": "MR"
+					}
+				]
+			},
+			"Visit": {
+				"VisitNumber": "1234",
+				"AccountNumber": null
+			},
+			"Media": {
+				"FileType": "PDF",
+				"FileName": "SamplePDF",
+				"FileContents": "JVBERi0xLjQKCjEgMCBvYmoKPDwKIC9UeXBlIC9DYXRhbG9nCiAvUGFnZXMgMiAwIFIKPj4KZW5kb2JqCgoyIDAgb2JqCjw8CiAvVHlwZSAvUGFnZXMKIC9LaWRzIFszIDAgUl0KIC9Db3VudCAxCj4+CmVuZG9iagoKMyAwIG9iago8PAogL1R5cGUgL1BhZ2UKIC9QYXJlbnQgMiAwIFIKIC9NZWRpYUJveCBbMCAwIDM1MCAyMDBdCiAvQ29udGVudHMgNCAwIFIKIC9SZXNvdXJjZXMgPDwKICAvUHJvY1NldCA1IDAgUgogIC9Gb250IDw8CiAgIC9GMSA2IDAgUgogID4+CiA+Pgo+PgplbmRvYmoKCjQgMCBvYmoKPDwgL0xlbmd0aCA3MyA+PgpzdHJlYW0KIEJUCiAgL0YxIDI0IFRmCiAgMTAwIDEwMCBUZAogIChIZWxsbyBmcm9tIFJlZG94KSBUagogRVQKZW5kc3RyZWFtCmVuZG9iagoKNSAwIG9iagogWy9QREYgL1RleHRdCmVuZG9iagoKNiAwIG9iago8PAogL1R5cGUgL0ZvbnQKIC9TdWJ0eXBlIC9UeXBlMQogL05hbWUgL0YxCiAvQmFzZUZvbnQgL0hlbHZldGljYQogL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoKeHJlZgowIDkKMDAwMDAwMDAwMCA2NTUzNSBmCjAwMDAwMDAwMDkgMDAwMDAgbgowMDAwMDAwMDc0IDAwMDAwIG4KMDAwMDAwMDEyMCAwMDAwMCBuCjAwMDAwMDAxNzkgMDAwMDAgbgowMDAwMDAwMzY0IDAwMDAwIG4KMDAwMDAwMDQ2NiAwMDAwMCBuCjAwMDAwMDA0OTYgMDAwMDAgbgoKdHJhaWxlcgo8PAovU2l6ZSA4Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo2MjUKJSVFT0Y=",
+				"DocumentType": "Sample Document",
+				"DocumentID": "e52180fb-75a2-41ea-9fcd-661a996de53f",
+				"DocumentDescription": null,
+				"CreationDateTime": "2017-06-22T19:30:04.387Z",
+				"ServiceDateTime": "2017-06-22T17:00:00.387Z",
+				"Provider": {
+					"ID": "4356789876",
+					"IDType": "NPI",
+					"FirstName": "Pat",
+					"LastName": "Granite",
+					"Credentials": [
+						"MD"
+					]
+				},
+				"Availability": "Available",
+			}
+		};
+
+		request.post(options, function (err, response, body) {
+			console.log('MEDIA RESPONSE:');
+			console.log('---------------');
+			console.log('Errors: ' + err);
+			console.log('Status code: ' + response.statusCode);
+			console.log('errors in body: ' + util.inspect(body.Meta.Errors));
+			res.send("PDF file sent, check your console: you should have a 200 HTTP status with no errors!");
+		});
+	})
+});
+
+
 //The following allows to verify the POST connection when destination is being created in Redox dashboard
-//It also allows to get Appointment information for a patient and store it into the local json DB (example from Tom): watch the video, and see how to use the DevTools to send Appointment info
+//Unrelated to our use cases, but it also allows to get Appointment information for a patient and store it into the local json DB (example from Tom): watch the video, and see how to use the DevTools to send Appointment info
 app.post('/destination', function (req, res) {
 	console.log('request body: ' + util.inspect(req.body));
 
@@ -154,216 +232,6 @@ app.get('/appointments', function (req, res) {
 	var appointments = db.get('appointments').value();
 	res.send(appointments);
 });
-
-//Craft the Redox Data Model to query patient by MRN
-//And call Redox API
-function getPatientDemographics(id, idtype) {
-
-}
-
-function sendPdf() {
-	//TODO: Destination dev tools: Data Model Media > New
-	//Example: send PDF for patient Timothy, provider=Pat Granite
-	/*
-	{
-	"Meta": {
-		"DataModel": "Media",
-		"EventType": "New",
-		"EventDateTime": "2020-05-22T01:48:36.263Z",
-		"Test": true,
-		"Source": {
-			"ID": "7ce6f387-c33c-417d-8682-81e83628cbd9",
-			"Name": "Redox Dev Tools"
-		},
-		"Destinations": [
-			{
-				"ID": "af394f14-b34a-464f-8d24-895f370af4c9",
-				"Name": "Redox EMR"
-			}
-		],
-		"Message": {
-			"ID": 5565
-		},
-		"Transmission": {
-			"ID": 12414
-		},
-		"FacilityCode": null
-	},
-	"Patient": {
-		"Identifiers": [
-			{
-				"ID": "0000000001",
-				"IDType": "MR"
-			},
-			{
-				"ID": "e167267c-16c9-4fe3-96ae-9cff5703e90a",
-				"IDType": "EHRID"
-			},
-			{
-				"ID": "a1d4ee8aba494ca",
-				"IDType": "NIST"
-			}
-		],
-		"Demographics": {
-			"FirstName": "Timothy",
-			"MiddleName": "Paul",
-			"LastName": "Bixby",
-			"DOB": "2008-01-06",
-			"SSN": "101-01-0001",
-			"Sex": "Male",
-			"Race": "White",
-			"IsHispanic": null,
-			"MaritalStatus": "Married",
-			"IsDeceased": null,
-			"DeathDateTime": null,
-			"PhoneNumber": {
-				"Home": "+18088675301",
-				"Office": null,
-				"Mobile": null
-			},
-			"EmailAddresses": [],
-			"Language": "en",
-			"Citizenship": [],
-			"Address": {
-				"StreetAddress": "4762 Hickory Street",
-				"City": "Monroe",
-				"State": "WI",
-				"ZIP": "53566",
-				"County": "Green",
-				"Country": "US"
-			}
-		},
-		"Notes": []
-	},
-	"Visit": {
-		"VisitNumber": "1234",
-		"AccountNumber": null
-	},
-	"Media": {
-		"FileType": "PDF",
-		"FileName": "SamplePDF",
-		"FileContents": "JVBERi0xLjQKCjEgMCBvYmoKPDwKIC9UeXBlIC9DYXRhbG9nCiAvUGFnZXMgMiAwIFIKPj4KZW5kb2JqCgoyIDAgb2JqCjw8CiAvVHlwZSAvUGFnZXMKIC9LaWRzIFszIDAgUl0KIC9Db3VudCAxCj4+CmVuZG9iagoKMyAwIG9iago8PAogL1R5cGUgL1BhZ2UKIC9QYXJlbnQgMiAwIFIKIC9NZWRpYUJveCBbMCAwIDM1MCAyMDBdCiAvQ29udGVudHMgNCAwIFIKIC9SZXNvdXJjZXMgPDwKICAvUHJvY1NldCA1IDAgUgogIC9Gb250IDw8CiAgIC9GMSA2IDAgUgogID4+CiA+Pgo+PgplbmRvYmoKCjQgMCBvYmoKPDwgL0xlbmd0aCA3MyA+PgpzdHJlYW0KIEJUCiAgL0YxIDI0IFRmCiAgMTAwIDEwMCBUZAogIChIZWxsbyBmcm9tIFJlZG94KSBUagogRVQKZW5kc3RyZWFtCmVuZG9iagoKNSAwIG9iagogWy9QREYgL1RleHRdCmVuZG9iagoKNiAwIG9iago8PAogL1R5cGUgL0ZvbnQKIC9TdWJ0eXBlIC9UeXBlMQogL05hbWUgL0YxCiAvQmFzZUZvbnQgL0hlbHZldGljYQogL0VuY29kaW5nIC9NYWNSb21hbkVuY29kaW5nCj4+CmVuZG9iagoKeHJlZgowIDkKMDAwMDAwMDAwMCA2NTUzNSBmCjAwMDAwMDAwMDkgMDAwMDAgbgowMDAwMDAwMDc0IDAwMDAwIG4KMDAwMDAwMDEyMCAwMDAwMCBuCjAwMDAwMDAxNzkgMDAwMDAgbgowMDAwMDAwMzY0IDAwMDAwIG4KMDAwMDAwMDQ2NiAwMDAwMCBuCjAwMDAwMDA0OTYgMDAwMDAgbgoKdHJhaWxlcgo8PAovU2l6ZSA4Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo2MjUKJSVFT0Y=",
-		"DocumentType": "Sample Document",
-		"DocumentID": "e52180fb-75a2-41ea-9fcd-661a996de53f",
-		"DocumentDescription": null,
-		"CreationDateTime": "2017-06-22T19:30:04.387Z",
-		"ServiceDateTime": "2017-06-22T17:00:00.387Z",
-		"Provider": {
-			"ID": "4356789876",
-			"IDType": "NPI",
-			"FirstName": "Pat",
-			"LastName": "Granite",
-			"Credentials": [
-				"MD"
-			],
-			"Address": {
-				"StreetAddress": "123 Main St.",
-				"City": "Madison",
-				"State": "WI",
-				"ZIP": "53703",
-				"County": "Dane",
-				"Country": "USA"
-			},
-			"EmailAddresses": [],
-			"PhoneNumber": {
-				"Office": "+16085551234"
-			},
-			"Location": {
-				"Type": null,
-				"Facility": null,
-				"Department": null,
-				"Room": null
-			}
-		},
-		"Authenticated": "False",
-		"Authenticator": {
-			"ID": null,
-			"IDType": null,
-			"FirstName": null,
-			"LastName": null,
-			"Credentials": [],
-			"Address": {
-				"StreetAddress": null,
-				"City": null,
-				"State": null,
-				"ZIP": null,
-				"County": null,
-				"Country": null
-			},
-			"EmailAddresses": [],
-			"PhoneNumber": {
-				"Office": null
-			},
-			"Location": {
-				"Type": null,
-				"Facility": null,
-				"Department": null,
-				"Room": null
-			}
-		},
-		"Availability": "Unavailable",
-		"Notifications": [
-			{
-				"ID": "2434534567",
-				"IDType": "NPI",
-				"FirstName": "Sharon",
-				"LastName": "Chalk",
-				"Credentials": [
-					"MD",
-					"PhD"
-				],
-				"Address": {
-					"StreetAddress": "312 Maple Dr. Suite 400",
-					"City": "Verona",
-					"State": "WI",
-					"ZIP": "53593",
-					"County": "Dane",
-					"Country": "USA"
-				},
-				"EmailAddresses": [],
-				"PhoneNumber": {
-					"Office": "+16085559999"
-				},
-				"Location": {
-					"Type": null,
-					"Facility": null,
-					"Department": null,
-					"Room": null
-				}
-			},
-			{
-				"ID": "8263749385",
-				"IDType": "NPI",
-				"FirstName": "Jim",
-				"LastName": "Mica",
-				"Credentials": [
-					"RN"
-				],
-				"Address": {
-					"StreetAddress": "5235 Kennedy Ave.",
-					"City": "Creve Cour",
-					"State": "MO",
-					"ZIP": "63141",
-					"County": "Saint Louis",
-					"Country": "USA"
-				},
-				"EmailAddresses": [],
-				"PhoneNumber": {
-					"Office": "+13145557777"
-				},
-				"Location": {
-					"Type": null,
-					"Facility": null,
-					"Department": null,
-					"Room": null
-				}
-			}
-		]
-	}
-}
-	*/ 
-
-}
 
 function getAuthToken(callback) {
 	if (authToken && Date.now() < new Date(authTokenExpires).getTime()) {

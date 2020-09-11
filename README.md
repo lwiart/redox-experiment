@@ -38,29 +38,24 @@ You must create in Redox dashboard Sources (EHR endpoints that will receive you 
   - Take note of the API key
   - Generate a Source Secret and take note of it
 
-
 - Put in the index.js code the previously noted SOURCE_API_KEY and SOURCE_SECRET
 
-- Now, you can search patient by Medical Record Number, by using the following URL: http://&lt;your IP address or domain name&gt;/patientsearch?id=&lt;the patient MRN&gt;.  Here are some Redox patient MRN examples:
+## Getting patient demographics from Medical Record Number
+Redox API allows to search patient by a variety of identifiers, such as MRN. See https://developer.redoxengine.com/data-models/PatientSearch.html.  
+
+- Now, you can search patient by Medical Record Number, by using the following URL: **http://&lt;your IP address or domain name&gt;/patientsearch?id=&lt;the patient MRN&gt;**.  Here are some Redox patient MRN examples:
   - Timothy Bixby: 0000000001
   - Barbara Bixby: 0000000002
   - Walter Carthwright: 0000000003
-- You should get the full JSON response containing the patient demographic profile (name, address, DoB, etc)
+- You should get the JSON response containing the patient demographics (name, address, DoB, etc)
 
+### Sending PDF report
+Redox API allows to send media such as PDF, JPG, PNG, etc. See https://developer.redoxengine.com/questions-and-answers/understanding-redox-media-data-model/  
+Note: for files under 200kb, they can be sent directly through the API. For files bigger than 200kb, they first need to be uploaded to the Redox blob endpoint, which will synchronously return the file URI that can then be specified in a Media message.
 
+- Use the following URL: **http://&lt;your IP address or domain name&gt;/sendpdf**
+- You should get a success message, and HTTP status 200 in your console ;)
 
-
-## Examples
-
-### Get patient demographics from her Medical Record Number
-
-
-### Send PDF report
-
-
-
-
-
-
-
-
+### Hint
+Don't forget that for any Data Model you want to craft, you can use **Destinations > DevTools** in Redox dashboard, then select the Data Model type and event you want.  
+Redox will automatically create the Data Model examples!
