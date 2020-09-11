@@ -1,10 +1,10 @@
 # Introduction
 
-Some quick and dirty code in a couple of days to experiment with Redox Data Model API for connection to EMRs (fetch patient demographic profile with medical record number, sending PDF file).
-It is based on a very nice example made by Tom Jessessky with a 15 Minutes Video ([the demo video](https://www.youtube.com/watch?v=4_CURkT_fCo)) for using the Redox API and the Redox Dev Tools. 
+Some quick and dirty code in a couple of days to experiment with Redox Data Model API for connection to EMRs (fetch patient demographics from medical record number, and sending a PDF report to patient's file in the EHR).
+It is based on a very nice example from Tom Jessessky's 15 min video demoing the Redox API and Dev Tools: [the demo video](https://www.youtube.com/watch?v=4_CURkT_fCo) 
 
 ## Installation
-You will need a server to run the Destination code, but you can run this locally and get the code for your Source working. 
+You will need a node.js server to run the code. 
 
 ### Pre-Requisites
 - [NodeJS](https://nodejs.org) and NPM installed
@@ -21,8 +21,7 @@ node index.js
 ```  
 
 ## Setup
-
-You must create in Redox dashboard Sources (EHR endpoints that will receive you calls) and Destinations (your endpoints that will receive calls)
+You must create a Source (EHR endpoints that will receive you calls) and a Destination (your endpoints that will receive calls) in your Redox dashboard.
 
 - Sign up for a developer account at https://www.redoxengine.com/
 - Create a Destination in Redox dashboard (will be your server endpoint for calling Redox APIs)
