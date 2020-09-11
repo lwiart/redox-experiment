@@ -56,5 +56,5 @@ Note: for files under 200kb, they can be sent directly through the API. For file
 - You should get a success message, and HTTP status 200 in your console ;)
 
 ### Hint
-Don't forget that for any Data Model you want to craft, you can use **Destinations > DevTools** in Redox dashboard, then select the Data Model type and event you want.  
+Don't forget that for any Data Model you want to craft, you can use **Destinations > your destination > DevTools** in [your Redox dashboard](https://dashboard.redoxengine.com/), then select the Data Model type and event you want.  
 Redox will automatically create the Data Model examples!
