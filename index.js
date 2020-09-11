@@ -2,9 +2,10 @@
 Summary: in the following, there are examples of querying Redox sandbox to:
 - Fetch patient demographic info from MRN (Medical Record Number)
 - Push a PDF file to EHR
+- Some other stuff...
 
 Some experiments were started but not finished:
-- SSO: "EHR launch",ie. HCP is in EHR and wants to connect to an external app without having to reauthenticate into the app
+- SSO: "EHR launch", ie. HCP is in EHR and wants to connect to an external app without having to reauthenticate into the app.
 - R^FHIR: Redox advertised that they have FHIR compliant APIs (for using instead of their Data Models approach). But this part seems to be too preliminary and not enough documented to be used
 */
 
