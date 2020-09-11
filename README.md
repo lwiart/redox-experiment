@@ -48,13 +48,13 @@ Redox API allows to search patient by a variety of identifiers, such as MRN. See
   - Walter Carthwright: 0000000003
 - You should get the JSON response containing the patient demographics (name, address, DoB, etc)
 
-### Sending PDF report
+## Sending PDF report
 Redox API allows to send media such as PDF, JPG, PNG, etc. See https://developer.redoxengine.com/questions-and-answers/understanding-redox-media-data-model/  
 Note: for files under 200kb, they can be sent directly through the API. For files bigger than 200kb, they first need to be uploaded to the Redox blob endpoint, which will synchronously return the file URI that can then be specified in a Media message.
 
 - Use the following URL: **http://&lt;your IP address or domain name&gt;/sendpdf**
 - You should get a success message, and HTTP status 200 in your console ;)
 
-### Hint
+## Hint
 Don't forget that for any Data Model you want to craft, you can use **Destinations > your destination > DevTools** in [your Redox dashboard](https://dashboard.redoxengine.com/), then select the Data Model type and event you want.  
 Redox will automatically create the Data Model example!
