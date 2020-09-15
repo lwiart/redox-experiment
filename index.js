@@ -1,8 +1,8 @@
 /*
 Summary: in the following, there are examples of querying Redox sandbox to:
-- Fetch patient demographic info from MRN (Medical Record Number)
-- Push a PDF file to EHR
-- Some other stuff...
+- Fetch patient demographic info from MRN (Medical Record Number): https://developer.redoxengine.com/data-models/PatientSearch.html
+- Push a PDF file to EHR: https://developer.redoxengine.com/data-models/Media.html
+- Some other stuff... (SSO basics started, to be finished): https://developer.redoxengine.com/data-models/SSO.html
 
 Some experiments were started but not finished:
 - SSO: "EHR launch", ie. HCP is in EHR and wants to connect to an external app without having to reauthenticate into the app.
@@ -156,10 +156,6 @@ app.get('/sendpdf', function (req, res) {
 					}
 				]
 			},
-			"Visit": {
-				"VisitNumber": "1234",
-				"AccountNumber": null
-			},
 			"Media": {
 				"FileType": "PDF",
 				"FileName": "SamplePDF",
@@ -171,12 +167,7 @@ app.get('/sendpdf', function (req, res) {
 				"ServiceDateTime": "2017-06-22T17:00:00.387Z",
 				"Provider": {
 					"ID": "4356789876",
-					"IDType": "NPI",
-					"FirstName": "Pat",
-					"LastName": "Granite",
-					"Credentials": [
-						"MD"
-					]
+					"IDType": "NPI"
 				},
 				"Availability": "Available",
 			}
