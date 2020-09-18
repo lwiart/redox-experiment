@@ -372,7 +372,7 @@ function sendMedia(appointment) {
 	const SSO_SECRET = "AoU3ZFudcFPTztyOzMKfJE39vMfXHgHx0B5unQQRphxdnKyZ3A9Y8JaJY3gN19ZDxmFQPuCU";
 
 	
-	// /!\ Having issues in Redox DevTools interface: seems that the call is not being sent to this endpoint...
+	// /!\ Having issues in Redox DevTools interface: seems that the call is not being sent to this endpoint... with javascript error (code 500)
 	//URL to perform JWT verification and redirection.
 	app.post('/sso', function (req, res) {
 		console.log('SSO request coming in:');
@@ -390,17 +390,24 @@ function sendMedia(appointment) {
 			// Note that we are passing the key in this method as well. This method will throw an error
 			// if the token is invalid (if it has expired according to the expiry time we set on sign in),
 			// or if the signature does not match
+			//Note: I'm not sure verify does also check the expiration --> should be double checked and otherwise verified later 
+			//      ie. check the timestamp in "exp" field and ensure that it's not going to expire within 30 sec, for example
+			//const nowUnixSeconds = Math.round(Number(new Date()) / 1000)
+			//if (payload.exp - nowUnixSeconds < 30) {
+			//	return res.status(401).end()
+			//}
+			//Alternatively, HTTP status returned could be 418 "I’m a teapot" ;)
 			payload = jwt.verify(req.headers.authorization.split(' ')[1], SSO_SECRET)
 		} catch (e) {
 			if (e instanceof jwt.JsonWebTokenError) {
-				// if the error thrown is because the JWT is unauthorized, return a 401 error
+				// if the error thrown is because the JWT is unauthorized, return a 403 error
 				return res.status(403).end();
 			}
 			// otherwise, return a bad request error
 			return res.status(400).end();
 		}
 
-		//Step 4: return a 302 redirection once adhoc checks done.
+		//Step 4: return a 302 redirection once checks done.
 		//Must pass the Data Model in body (contain the HCP info) in some way...
 		res.redirect('/ssohappy');
 	});
@@ -414,7 +421,7 @@ function sendMedia(appointment) {
 		console.log('SSO Error!');
 		console.log('----------');
 		console.log(util.inspect(req.body));
-		res.send("SSO is unhappy :(");
+		res.send("SSO unhappy :(");
 	});
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
