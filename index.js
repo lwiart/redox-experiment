@@ -350,18 +350,63 @@ function sendMedia(appointment) {
 			console.log(body);
 		});
 	})
+}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Some SSO experiment, work in progress.
+	//See: https://developer.redoxengine.com/questions-and-answers/redox-sso-data-model-hood/
+	//First, create a Redox destination, Method=SSO, Format=JSON
 	//The endpoint must be able to receive and process JSON Web Token (see Redox Destination > Dev Tools > Data Model SSO).
+	//Steps:
+	// 1- receive POST request from Redox
+	// 2- verify JSON Web Token signature. If fails, return 403 (Invalid signature)
+	// 3- verify that token is not expired. If fails, return 403 (Token expired)
+	//From there, 2 options: either redirect to the right URL that will verify the user credentials, or verify user credentials before redirecting to the right URL
+	// 4- respond with 302 and "Location: " set to the redirect URL
+	//
+	//To test, go to your Redox Destination > DevTools > send a JWT to the endpoint below
+	// The request sent will contain a signed JWT as header and a Redox Data Model as body
 
-	app.get('/sso', function (req, res) {
+	const jwt = require("jsonwebtoken");
+	//Secret used to sign the JWT. Algo used: HMAC SHA256. the token will be sent in the header: "Authorization: Bearer <token>"
+	const SSO_SECRET = "AoU3ZFudcFPTztyOzMKfJE39vMfXHgHx0B5unQQRphxdnKyZ3A9Y8JaJY3gN19ZDxmFQPuCU";
+
+	
+	// /!\ Having issues in Redox DevTools interface: seems that the call is not being sent to this endpoint...
+	//URL to perform JWT verification and redirection.
+	app.post('/sso', function (req, res) {
 		console.log('SSO request coming in:');
 		console.log('----------------------');
+		console.log('Headers:');
+		console.log(util.inspect(req.headers));
+		console.log('Body:');
 		console.log(util.inspect(req.body));
 
-		//must return a 301 once adhoc checks done
-		res.sendStatus(200)
+		//Step 1: verify JWT signature
+		//Step 2: verify token not expired
+		var payload;
+		try {
+			// Parse the JWT string and store the result in `payload`.
+			// Note that we are passing the key in this method as well. This method will throw an error
+			// if the token is invalid (if it has expired according to the expiry time we set on sign in),
+			// or if the signature does not match
+			payload = jwt.verify(req.headers.authorization.split(' ')[1], SSO_SECRET)
+		} catch (e) {
+			if (e instanceof jwt.JsonWebTokenError) {
+				// if the error thrown is because the JWT is unauthorized, return a 401 error
+				return res.status(403).end();
+			}
+			// otherwise, return a bad request error
+			return res.status(400).end();
+		}
+
+		//Step 4: return a 302 redirection once adhoc checks done.
+		//Must pass the Data Model in body (contain the HCP info) in some way...
+		res.redirect('/ssohappy');
+	});
+
+	app.get('/ssohappy', function (req, res) {
+		res.send("JWT verified, redirection done, SSO happy ;)");
 	});
 
 	//if SSO error
@@ -369,8 +414,7 @@ function sendMedia(appointment) {
 		console.log('SSO Error!');
 		console.log('----------');
 		console.log(util.inspect(req.body));
-
-		res.sendStatus(401)
+		res.send("SSO is unhappy :(");
 	});
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -420,6 +464,7 @@ function sendMedia(appointment) {
 			});
 		}
 	}
+
 	function getPatientFhir(id, idtype) {
 		console.log('Searching patient ' + idtype + '=' + util.inspect(id));
 		getAuthToken(function (token) {
@@ -469,5 +514,3 @@ function sendMedia(appointment) {
 		});
 	}
 	//////////////////////////////////////End of FHIR experiment///////////////////////////////////////////////////////////////////
-
-}
